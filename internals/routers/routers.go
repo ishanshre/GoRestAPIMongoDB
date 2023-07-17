@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/handlers"
 )
@@ -19,6 +20,8 @@ func Router(h handlers.Handlers) http.Handler {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+
+	mux.Use(middleware.Logger)
 
 	mux.Get("/", h.GetUsers)
 	return mux
