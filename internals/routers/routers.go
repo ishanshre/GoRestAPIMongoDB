@@ -24,5 +24,7 @@ func Router(h handlers.Handlers) http.Handler {
 	mux.Use(middleware.Logger)
 
 	mux.Get("/", h.GetUsers)
+	mux.Post("/", h.CreateUser)
+	mux.Delete("/users/{username}", h.DeleteUser)
 	return mux
 }

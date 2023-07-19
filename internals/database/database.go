@@ -8,25 +8,26 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type DB struct {
-	Client         *mongo.Client
-	Collectiontion *mongo.Collection
+type DbInterface interface {
+	GetUserCollection() *mongo.Collection
 }
 
-func ConnectToNoSql(dsn string) (*DB, error) {
+type DB struct {
+	Client *mongo.Client
+}
+
+func ConnectToNoSql(dsn string) (DbInterface, error) {
 	client, err := NewDatabase(dsn)
 	if err != nil {
 		return nil, err
 	}
-	collection := CreateCollections(client, "auth", "users")
 	return &DB{
-		Client:         client,
-		Collectiontion: collection,
+		Client: client,
 	}, nil
 }
 
-func CreateCollections(c *mongo.Client, database, name string) *mongo.Collection {
-	return c.Database(database).Collection(name)
+func (db *DB) GetUserCollection() *mongo.Collection {
+	return db.Client.Database("myDB").Collection("users")
 }
 
 func NewDatabase(dsn string) (*mongo.Client, error) {
