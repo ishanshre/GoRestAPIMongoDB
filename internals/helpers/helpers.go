@@ -3,7 +3,18 @@ package helpers
 import (
 	"encoding/json"
 	"net/http"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
+
+func ToBSON(v interface{}) (doc *bson.D, err error) {
+	data, err := bson.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	err = bson.Unmarshal(data, &doc)
+	return
+}
 
 type Message struct {
 	MessageStatus string `json:"status,omitempty"`

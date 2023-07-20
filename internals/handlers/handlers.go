@@ -19,6 +19,8 @@ type Handlers interface {
 	CreateUser(w http.ResponseWriter, r *http.Request)
 	GetUsers(w http.ResponseWriter, r *http.Request)
 	DeleteUser(w http.ResponseWriter, r *http.Request)
+	UpdateUser(w http.ResponseWriter, r *http.Request)
+	GetUserByUsername(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -74,4 +76,29 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	helpers.StatusAccepted(w, fmt.Sprintf("%s deleted", username))
+}
+
+func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+	updateObj := &models.User{}
+	if err := json.NewDecoder(r.Body).Decode(&updateObj); err != nil {
+		helpers.StatusBadRequest(w, err.Error())
+		return
+	}
+	user, err := h.MG.UpdateUser(username, updateObj)
+	if err != nil {
+		helpers.InternalServerError(w, err.Error())
+		return
+	}
+	helpers.StatusAcceptedData(w, user)
+}
+
+func (h *handler) GetUserByUsername(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+	user, err := h.MG.GetUserByUsername(username)
+	if err != nil {
+		helpers.InternalServerError(w, err.Error())
+		return
+	}
+	helpers.StatusOk(w, user)
 }

@@ -108,3 +108,34 @@ func (m *mongodbRepo) UsernameExists(username string) error {
 	}
 	return nil
 }
+
+func (m *mongodbRepo) GetUserByUsername(username string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(m.ctx, timeout)
+	defer cancel()
+
+	query := bson.M{"username": username}
+	user := &models.User{}
+	if err := m.Client.GetUserCollection().FindOne(ctx, query).Decode(&user); err != nil {
+		return nil, fmt.Errorf("error in fetcthing the user with username %s", username)
+	}
+	return user, nil
+}
+
+func (m *mongodbRepo) UpdateUser(username string, updateObj *models.User) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(m.ctx, timeout)
+	defer cancel()
+	query := bson.M{"username": username}
+	update := bson.D{{"$set", bson.D{
+		{"first_name", updateObj.FirstName},
+		{"last_name", updateObj.LastName},
+	}}}
+	_, err := m.Client.GetUserCollection().UpdateOne(ctx, query, update)
+	if err != nil {
+		return nil, errors.New("error in updating field")
+	}
+	user, err := m.GetUserByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
