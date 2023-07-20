@@ -13,6 +13,7 @@ import (
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/models"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/repository"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/repository/dbrepo"
+	"github.com/ishanshre/GoRestAPIMongoDB/utils"
 )
 
 type Handlers interface {
@@ -61,7 +62,13 @@ func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		helpers.StatusBadRequest(w, err.Error())
 		return
 	}
-	user, err := h.MG.CreateUser(user)
+	hashedPassword, err := utils.GeneratePasswordHash(user.Password)
+	if err != nil {
+		helpers.InternalServerError(w, "cannot generate hash password")
+		return
+	}
+	user.Password = hashedPassword
+	user, err = h.MG.CreateUser(user)
 	if err != nil {
 		helpers.InternalServerError(w, err.Error())
 		return
