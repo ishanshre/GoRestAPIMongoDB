@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/helpers"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/models"
@@ -28,11 +30,20 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		helpers.StatusBadRequest(w, "invalid username/password")
 		return
 	}
-	_, token, err := utils.GenerateLoginResponse(user.ID.Hex(), user.Username)
+	loginResponse, token, err := utils.GenerateLoginResponse(user.ID.Hex(), user.Username)
 	if err != nil {
 		helpers.InternalServerError(w, err.Error())
 		return
 	}
-	helpers.StatusAcceptedData(w, token)
+	tokenJson, err := json.Marshal(token)
+	if err != nil {
+		helpers.InternalServerError(w, err.Error())
+		return
+	}
+	if err := h.RedisClient.Set(context.Background(), token.AccessToken.TokenID, tokenJson, time.Until(token.AccessToken.ExpiresAt)).Err(); err != nil {
+		helpers.InternalServerError(w, err.Error())
+		return
+	}
+	helpers.StatusAcceptedData(w, loginResponse)
 
 }

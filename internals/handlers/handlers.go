@@ -16,6 +16,7 @@ import (
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/repository/dbrepo"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/validators"
 	"github.com/ishanshre/GoRestAPIMongoDB/utils"
+	"github.com/redis/go-redis/v9"
 )
 
 type Handlers interface {
@@ -31,16 +32,18 @@ type Handlers interface {
 var validate *validator.Validate
 
 type handler struct {
-	MG repository.MongoDbRepo
+	MG          repository.MongoDbRepo
+	RedisClient *redis.Client
 }
 
-func NewHandler(mg database.DbInterface) Handlers {
+func NewHandler(mg database.DbInterface, r *redis.Client) Handlers {
 	validate = validator.New()
 	validate.RegisterValidation("uppercase", validators.UpperCase)
 	validate.RegisterValidation("lowercase", validators.LowerCase)
 	validate.RegisterValidation("number", validators.Number)
 	return &handler{
-		MG: dbrepo.NewMongoDbRepo(mg, context.Background()),
+		MG:          dbrepo.NewMongoDbRepo(mg, context.Background()),
+		RedisClient: r,
 	}
 }
 
