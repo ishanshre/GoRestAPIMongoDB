@@ -24,6 +24,8 @@ type Handlers interface {
 	DeleteUser(w http.ResponseWriter, r *http.Request)
 	UpdateUser(w http.ResponseWriter, r *http.Request)
 	GetUserByUsername(w http.ResponseWriter, r *http.Request)
+
+	UserLogin(w http.ResponseWriter, r *http.Request)
 }
 
 var validate *validator.Validate

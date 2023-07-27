@@ -19,13 +19,13 @@ var (
 
 type Claims struct {
 	Username string
-	ID       int
+	ID       string
 	jwt.RegisteredClaims
 }
 
 type TokenDetail struct {
 	Username  string
-	UserId    int
+	UserId    string
 	TokenID   string
 	Token     *string
 	ExpiresAt time.Time
@@ -43,7 +43,7 @@ type LoginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func GenerateLoginResponse(id int, username string) (*LoginResponse, *Token, error) {
+func GenerateLoginResponse(id, username string) (*LoginResponse, *Token, error) {
 	tokenID := uuid.NewV4().String()
 	accessTokenDetail, err := GenerateToken(id, username, tokenID, "access_token")
 	if err != nil {
@@ -64,7 +64,7 @@ func GenerateLoginResponse(id int, username string) (*LoginResponse, *Token, err
 
 }
 
-func GenerateToken(id int, username, tokenID, subject string) (*TokenDetail, error) {
+func GenerateToken(id, username, tokenID, subject string) (*TokenDetail, error) {
 	claims := &Claims{}
 	if subject == "access_token" {
 		claims = &Claims{

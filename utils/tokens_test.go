@@ -7,7 +7,7 @@ import (
 )
 
 func TestGenerateLoginResponse(t *testing.T) {
-	id := int(RandomInt(int64(0), int64(1000000000)))
+	id := RandomNumString(20)
 	username := RandomString(10)
 	loginResponse, token, err := GenerateLoginResponse(id, username)
 	assert.NoError(t, err)

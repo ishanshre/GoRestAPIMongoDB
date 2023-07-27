@@ -9,14 +9,14 @@ import (
 )
 
 func TestVerifyTokenWithClaims(t *testing.T) {
-	id := RandomInt(int64(0), int64(10000))
+	id := RandomNumString(20)
 	username := RandomString(10)
 	tokenID := RandomNumString(12)
-	tokenDetail, err := GenerateToken(int(id), username, tokenID, "access_token")
+	tokenDetail, err := GenerateToken(id, username, tokenID, "access_token")
 	assert.NoError(t, err)
 	assert.NotNil(t, tokenDetail)
 	assert.Equal(t, tokenDetail.TokenID, tokenID)
-	assert.Equal(t, tokenDetail.UserId, int(id))
+	assert.Equal(t, tokenDetail.UserId, id)
 	assert.Equal(t, tokenDetail.Username, username)
 	assert.NotNil(t, tokenDetail.Token)
 
@@ -30,14 +30,14 @@ func TestVerifyTokenWithClaims(t *testing.T) {
 }
 
 func TestVerifyTokenWithClaims_Failure(t *testing.T) {
-	id := RandomInt(int64(0), int64(10000))
+	id := RandomNumString(20)
 	username := RandomString(10)
 	tokenID := RandomNumString(12)
-	tokenDetail, err := GenerateToken(int(id), username, tokenID, "access_token")
+	tokenDetail, err := GenerateToken(id, username, tokenID, "access_token")
 	assert.NoError(t, err)
 	assert.NotNil(t, tokenDetail)
 	assert.Equal(t, tokenDetail.TokenID, tokenID)
-	assert.Equal(t, tokenDetail.UserId, int(id))
+	assert.Equal(t, tokenDetail.UserId, id)
 	assert.Equal(t, tokenDetail.Username, username)
 	assert.NotNil(t, tokenDetail.Token)
 
@@ -48,13 +48,13 @@ func TestVerifyTokenWithClaims_Failure(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, token)
 
-	token, err = GenerateToken(int(id), username, tokenID, "")
+	token, err = GenerateToken(id, username, tokenID, "")
 	assert.Error(t, err)
 	assert.Nil(t, token)
 
 	newClaims := &Claims{
 		Username: username,
-		ID:       int(id),
+		ID:       id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * -12)),
 			Subject:   "access_token",
