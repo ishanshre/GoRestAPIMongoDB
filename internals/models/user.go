@@ -14,3 +14,8 @@ type User struct {
 	Password  string             `json:"password,omitempty" bson:"password,omitempty"`
 	CreatedAt time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
 }
+
+type CreateUser struct {
+	Username string `json:"username,omitempty" bson:"username,omitempty,unique" validate:"required,min=6,max=30"`
+	Password string `json:"password,omitempty" bson:"password,omitempty" validate:"required,min=8,max=30,containsany=!@#$$%^&*(),uppercase,lowercase,number"`
+}

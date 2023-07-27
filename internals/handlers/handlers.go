@@ -8,11 +8,13 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/database"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/helpers"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/models"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/repository"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/repository/dbrepo"
+	"github.com/ishanshre/GoRestAPIMongoDB/internals/validators"
 	"github.com/ishanshre/GoRestAPIMongoDB/utils"
 )
 
@@ -24,11 +26,17 @@ type Handlers interface {
 	GetUserByUsername(w http.ResponseWriter, r *http.Request)
 }
 
+var validate *validator.Validate
+
 type handler struct {
 	MG repository.MongoDbRepo
 }
 
 func NewHandler(mg database.DbInterface) Handlers {
+	validate = validator.New()
+	validate.RegisterValidation("uppercase", validators.UpperCase)
+	validate.RegisterValidation("lowercase", validators.LowerCase)
+	validate.RegisterValidation("number", validators.Number)
 	return &handler{
 		MG: dbrepo.NewMongoDbRepo(mg, context.Background()),
 	}
@@ -53,27 +61,41 @@ func (h *handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	user := &models.User{}
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+	newUser := &models.CreateUser{}
+	if err := json.NewDecoder(r.Body).Decode(&newUser); err != nil {
 		helpers.StatusBadRequest(w, "error in parsing json")
 		return
 	}
-	if err := h.MG.UsernameExists(user.Username); err != nil {
+	if err := validate.Struct(newUser); err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			fieldName := err.Field()
+			if err.Tag() == "containsany" {
+				helpers.StatusBadRequest(w, fmt.Sprintf("%s must have at least one special characters from: %v", fieldName, err.Param()))
+				return
+			}
+			helpers.StatusBadRequest(w, fmt.Sprintf("%s must have at least one %s %v characters", fieldName, err.Tag(), err.Param()))
+		}
+		return
+	}
+	if err := h.MG.UsernameExists(newUser.Username); err != nil {
 		helpers.StatusBadRequest(w, err.Error())
 		return
 	}
-	hashedPassword, err := utils.GeneratePasswordHash(user.Password)
+	hashedPassword, err := utils.GeneratePasswordHash(newUser.Password)
 	if err != nil {
 		helpers.InternalServerError(w, "cannot generate hash password")
 		return
 	}
-	user.Password = hashedPassword
-	user, err = h.MG.CreateUser(user)
+	user := &models.User{
+		Username: newUser.Username,
+		Password: hashedPassword,
+	}
+	getUser, err := h.MG.CreateUser(user)
 	if err != nil {
 		helpers.InternalServerError(w, err.Error())
 		return
 	}
-	helpers.StatusCreated(w, user)
+	helpers.StatusCreated(w, getUser)
 }
 
 func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
