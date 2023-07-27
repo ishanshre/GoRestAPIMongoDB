@@ -26,6 +26,7 @@ func Router(h handlers.Handlers, m middlewares.Middlewares) http.Handler {
 
 	mux.Post("/", h.CreateUser)
 	mux.Post("/login", h.UserLogin)
+	mux.Post("/refresh", h.RefreshToken)
 	mux.Group(func(mux chi.Router) {
 		mux.Use(m.JwtAuth)
 		mux.Get("/", h.GetUsers)

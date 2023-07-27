@@ -28,6 +28,7 @@ type Handlers interface {
 
 	UserLogin(w http.ResponseWriter, r *http.Request)
 	UserLogout(w http.ResponseWriter, r *http.Request)
+	RefreshToken(w http.ResponseWriter, r *http.Request)
 }
 
 var validate *validator.Validate

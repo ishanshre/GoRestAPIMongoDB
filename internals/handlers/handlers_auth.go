@@ -85,3 +85,40 @@ func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	helpers.StatusOk(w, "Logout Success")
 }
+
+func (h *handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	refreshToken := &models.RefreshToken{}
+	if err := json.NewDecoder(r.Body).Decode(&refreshToken); err != nil {
+		helpers.StatusBadRequest(w, "could not parse json data")
+		return
+	}
+	tokenDetails, err := utils.VerifyTokenWithClaims(refreshToken.RefreshToken, "refresh_token")
+	if err != nil {
+		helpers.StatusBadRequest(w, err.Error())
+		return
+	}
+	exists, err := h.RedisClient.Exists(context.Background(), tokenDetails.Username).Result()
+	if err != nil {
+		helpers.InternalServerError(w, err.Error())
+		return
+	}
+	if exists == 1 {
+		if err := h.RedisClient.Del(context.Background(), tokenDetails.Username).Err(); err != nil {
+			helpers.InternalServerError(w, "error in deleting previous token")
+			return
+		}
+	} else {
+		helpers.StatusBadRequest(w, "token already revoked")
+	}
+	loginResponse, token, err := utils.GenerateLoginResponse(tokenDetails.UserId, tokenDetails.Username)
+	if err != nil {
+		helpers.InternalServerError(w, "token creating error")
+		return
+	}
+	tokenJson, _ := json.Marshal(token)
+	if err := h.RedisClient.Set(context.Background(), loginResponse.Username, tokenJson, time.Until(token.RefreshToken.ExpiresAt)).Err(); err != nil {
+		helpers.InternalServerError(w, "error storing tokens")
+		return
+	}
+	helpers.StatusOk(w, token)
+}
