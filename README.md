@@ -5,4 +5,5 @@ A simple golang json rest api example with Mongo Db (No SQL) with JWT authentica
 ## .env file content
 ```
 dsn="mongodb://yourHostname:yourMongoDBPort"
+secret=your jwt secret
 ```
