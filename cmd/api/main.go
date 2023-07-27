@@ -10,6 +10,7 @@ import (
 
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/database"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/handlers"
+	"github.com/ishanshre/GoRestAPIMongoDB/internals/middlewares"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/routers"
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
@@ -48,8 +49,11 @@ func main() {
 	// connect to handler interface
 	h := handlers.NewHandler(client, redisPool)
 
+	// middleware
+	middleware := middlewares.NewMiddleware(redisPool)
+
 	// connect to router
-	router := routers.Router(h)
+	router := routers.Router(h, middleware)
 
 	log.Printf("Starting Server at port : %d", *port)
 

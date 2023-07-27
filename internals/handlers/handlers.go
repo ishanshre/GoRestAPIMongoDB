@@ -27,6 +27,7 @@ type Handlers interface {
 	GetUserByUsername(w http.ResponseWriter, r *http.Request)
 
 	UserLogin(w http.ResponseWriter, r *http.Request)
+	UserLogout(w http.ResponseWriter, r *http.Request)
 }
 
 var validate *validator.Validate

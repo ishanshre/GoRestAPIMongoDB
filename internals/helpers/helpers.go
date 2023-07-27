@@ -24,6 +24,8 @@ type Message struct {
 	Data          any    `json:"data,omitempty"`
 }
 
+type ContextKey string
+
 func WriteJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -32,6 +34,13 @@ func WriteJSON(w http.ResponseWriter, status int, data any) {
 
 func InternalServerError(w http.ResponseWriter, err string) {
 	WriteJSON(w, http.StatusInternalServerError, Message{
+		MessageStatus: "error",
+		Message:       err,
+	})
+}
+
+func StatusUnauthorized(w http.ResponseWriter, err string) {
+	WriteJSON(w, http.StatusUnauthorized, Message{
 		MessageStatus: "error",
 		Message:       err,
 	})

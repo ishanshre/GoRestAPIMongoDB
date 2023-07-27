@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -30,6 +31,17 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		helpers.StatusBadRequest(w, "invalid username/password")
 		return
 	}
+	exists, err := h.RedisClient.Exists(context.Background(), user.Username).Result()
+	if err != nil {
+		helpers.InternalServerError(w, err.Error())
+		return
+	}
+	if exists == 1 {
+		if err := h.RedisClient.Del(context.Background(), user.Username).Err(); err != nil {
+			helpers.InternalServerError(w, err.Error())
+			return
+		}
+	}
 	loginResponse, token, err := utils.GenerateLoginResponse(user.ID.Hex(), user.Username)
 	if err != nil {
 		helpers.InternalServerError(w, err.Error())
@@ -40,10 +52,36 @@ func (h *handler) UserLogin(w http.ResponseWriter, r *http.Request) {
 		helpers.InternalServerError(w, err.Error())
 		return
 	}
-	if err := h.RedisClient.Set(context.Background(), token.AccessToken.TokenID, tokenJson, time.Until(token.AccessToken.ExpiresAt)).Err(); err != nil {
+	if err := h.RedisClient.Set(context.Background(), token.AccessToken.Username, tokenJson, time.Until(token.RefreshToken.ExpiresAt)).Err(); err != nil {
 		helpers.InternalServerError(w, err.Error())
 		return
 	}
 	helpers.StatusAcceptedData(w, loginResponse)
 
+}
+
+const (
+	tokenDetailKey helpers.ContextKey = "tokenDetail"
+)
+
+func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Context().Value(tokenDetailKey))
+	tokenDetail := r.Context().Value(tokenDetailKey).(*utils.TokenDetail)
+	username := tokenDetail.Username
+	if username == "" {
+		helpers.StatusBadRequest(w, "Not Authorized")
+		return
+	}
+	exists, err := h.RedisClient.Exists(context.Background(), username).Result()
+	if err != nil {
+		helpers.InternalServerError(w, err.Error())
+		return
+	}
+	if exists == 1 {
+		if err := h.RedisClient.Del(context.Background(), username).Err(); err != nil {
+			helpers.InternalServerError(w, err.Error())
+			return
+		}
+	}
+	helpers.StatusOk(w, "Logout Success")
 }

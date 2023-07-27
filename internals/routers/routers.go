@@ -7,9 +7,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/ishanshre/GoRestAPIMongoDB/internals/handlers"
+	"github.com/ishanshre/GoRestAPIMongoDB/internals/middlewares"
 )
 
-func Router(h handlers.Handlers) http.Handler {
+func Router(h handlers.Handlers, m middlewares.Middlewares) http.Handler {
 	mux := chi.NewRouter()
 
 	mux.Use(cors.Handler(cors.Options{
@@ -23,11 +24,15 @@ func Router(h handlers.Handlers) http.Handler {
 
 	mux.Use(middleware.Logger)
 
-	mux.Get("/", h.GetUsers)
 	mux.Post("/", h.CreateUser)
 	mux.Post("/login", h.UserLogin)
-	mux.Delete("/users/{username}", h.DeleteUser)
-	mux.Put("/users/{username}", h.UpdateUser)
-	mux.Get("/users/{username}", h.GetUserByUsername)
+	mux.Group(func(mux chi.Router) {
+		mux.Use(m.JwtAuth)
+		mux.Get("/", h.GetUsers)
+		mux.Delete("/users/{username}", h.DeleteUser)
+		mux.Post("/logout", h.UserLogout)
+		mux.Put("/users/{username}", h.UpdateUser)
+		mux.Get("/users/{username}", h.GetUserByUsername)
+	})
 	return mux
 }
