@@ -106,7 +106,13 @@ func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	tokenDetail := r.Context().Value(tokenDetailKey).(*utils.TokenDetail)
 	username := chi.URLParam(r, "username")
+
+	if tokenDetail.Username != username {
+		helpers.StatusUnauthorized(w, "You are not authorized to delete others")
+		return
+	}
 	if err := h.MG.DeleteUser(username); err != nil {
 		helpers.InternalServerError(w, err.Error())
 		return
@@ -115,7 +121,13 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	tokenDetail := r.Context().Value(tokenDetailKey).(*utils.TokenDetail)
 	username := chi.URLParam(r, "username")
+
+	if tokenDetail.Username != username {
+		helpers.StatusUnauthorized(w, "You are not authorized to delete others")
+		return
+	}
 	updateObj := &models.User{}
 	if err := json.NewDecoder(r.Body).Decode(&updateObj); err != nil {
 		helpers.StatusBadRequest(w, err.Error())
@@ -130,7 +142,13 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetUserByUsername(w http.ResponseWriter, r *http.Request) {
+	tokenDetail := r.Context().Value(tokenDetailKey).(*utils.TokenDetail)
 	username := chi.URLParam(r, "username")
+
+	if tokenDetail.Username != username {
+		helpers.StatusUnauthorized(w, "You are not authorized to delete others")
+		return
+	}
 	user, err := h.MG.GetUserByUsername(username)
 	if err != nil {
 		helpers.InternalServerError(w, err.Error())

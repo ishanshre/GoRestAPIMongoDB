@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -65,7 +64,6 @@ const (
 )
 
 func (h *handler) UserLogout(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Context().Value(tokenDetailKey))
 	tokenDetail := r.Context().Value(tokenDetailKey).(*utils.TokenDetail)
 	username := tokenDetail.Username
 	if username == "" {
